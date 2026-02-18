@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Tasks</title>
+    <style>
+        body {
+            font-family: "Segoe UI", system-ui, sans-serif;
+            margin: 40px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            text-align: left;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+        a {
+            text-decoration: none;
+            color: #6264a7;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2 id="title">Tasks</h2>
+    </div>
+
+    <table id="ticketsTable">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+
+        const params = new URLSearchParams(window.location.search);
+        const ticketId = params.get("ticketId");
+        let taskData = [];
+        let ticket = {};
+
+        async function getTicket() {
+            const res = await fetch(`/api/tickets/${ticketId}`)
+            return res.json()
+        }
+
+        function handleTaskClick(taskId) {
+                const task = taskData.find(t => t.id === taskId);
+                console.log(task)
+                // Call the Power Automate flow to create the task
+                fetch(`${task.url}`, {
+                    method: task.method.value || "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ ticket })
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error("Failed to invoke task");
+                    alert("Task invoked successfully!");
+                })
+                .catch(err => {
+                    alert(err.message);
+                });
+            }
+
+        async function main() {
+            ticket = await getTicket();
+
+            if (!ticket) {
+               
+            } else {
+                fetch(`/api/tasks/${ticket.teamId}`)
+                    .then(r => {
+                        if (!r.ok) throw new Error("Failed to load tickets");
+                        return r.json();
+                    })
+                    .then(data => {
+                        taskData = data;
+                        const tbody = document.querySelector("#ticketsTable tbody");
+                        tbody.innerHTML = "";
+
+                        data.forEach(t => {
+                            const row = document.createElement("tr");
+                            row.innerHTML = `
+                            <td>${t.title}</td>
+                    <td><a href="#" onclick="handleTaskClick(${t.id})"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+  <path d="M13 2L3 14h7l-1 8 12-14h-7l1-6z"/>
+</svg>
+</a></td>
+                `;
+                            tbody.appendChild(row);
+                        });
+                    })
+                    .catch(err => {
+                        document.getElementById("title").innerText = err.message;
+                    });
+            }
+        }
+        main();
+        </script>
+</body>
+</html>
