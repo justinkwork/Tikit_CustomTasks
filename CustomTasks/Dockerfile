@@ -13,7 +13,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["CustomTasks/CustomTasks.csproj", "CustomTasks/"]
-RUN dotnet restore "./CustomTasks/CustomTasks.csproj"
+RUN dotnet restore "./CustomTasks.csproj"
 COPY . .
 WORKDIR "/src/CustomTasks"
 RUN dotnet build "./CustomTasks.csproj" -c $BUILD_CONFIGURATION -o /app/build
